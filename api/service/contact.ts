@@ -41,12 +41,30 @@ export const ContactService = async (req: Request, res: Response) => {
 
     //no need to add new contact to DB before sorting because the new contact cannot be primary if there -
     // are contacts with same phone/email already present in the DB
-    const newContact = await Contact.create({
-        email,
-        phoneNumber,
-        linkedId: primaryContact.id,
-        linkPrecedence: 'secondary'
-    });
+    let contactAlreadyExists = false;
+    let existingContact = undefined;
+    for (let contact of contacts) {
+        if (contact.email === email && contact.phoneNumber === phoneNumber) {
+            contactAlreadyExists = true;
+            existingContact = contact;
+            break;
+        }
+    }
+
+    //create new contact only if the old one doesnt exist
+    let newContact = undefined;
+
+    if (contactAlreadyExists) {
+        // await existingContact?.update(); //update to change updatedAt - not specified in the requirement
+    } else {
+        newContact = await Contact.create({
+            email,
+            phoneNumber,
+            linkedId: primaryContact.id,
+            linkPrecedence: 'secondary'
+        });
+    }
+
     //get all non-null emails, phoneNumbers and secondary ids
     const emailSet = new Set();
     const emails: string[] = contacts.filter(contact => {
@@ -75,11 +93,13 @@ export const ContactService = async (req: Request, res: Response) => {
         return false;
     }).map(contact => contact.phoneNumber as string);
 
-    secondaryContactIds.push(newContact.id);
-    if (email && !emailSet.has(email))
-        emails.push(email as string);
-    if (phoneNumber && !phoneNumbersSet.has(phoneNumber))
-        phoneNumbers.push(phoneNumber as string);
+    if (newContact) {
+        secondaryContactIds.push(newContact.id);
+        if (email && !emailSet.has(email))
+            emails.push(email as string);
+        if (phoneNumber && !phoneNumbersSet.has(phoneNumber))
+            phoneNumbers.push(phoneNumber as string);
+    }
 
     return res.status(200).json({
         contact: {
