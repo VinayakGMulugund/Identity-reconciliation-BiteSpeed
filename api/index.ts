@@ -2,6 +2,7 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import dotenv from 'dotenv'
 import { sequel } from './config/postgres';
+import { ContactService, getAll } from './service/contact';
 
 
 dotenv.config();
@@ -11,9 +12,8 @@ const port = process.env.PORT || 3000;
 
 app.use(bodyParser.json());
 
-app.post('/identify', (req, res) => {
-    res.json({message: "Received request"});
-});
+app.post('/identify', ContactService);
+app.get('', getAll)
 
 
 sequel.sync({ force: false }).then(() => {
