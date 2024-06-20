@@ -1,4 +1,3 @@
-import { sequel } from "../config/postgres";
 import { Request, Response } from "express";
 import Contact from "../models/contact";
 import { Op } from "sequelize";
@@ -55,7 +54,7 @@ export const ContactService = async (req: Request, res: Response) => {
     let newContact = undefined;
 
     if (contactAlreadyExists) {
-        // await existingContact?.update(); //update to change updatedAt - not specified in the requirement
+        //update to change updatedAt - not specified in the requirement
     } else {
         newContact = await Contact.create({
             email,
