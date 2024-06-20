@@ -34,7 +34,7 @@ export const ContactService = async (req: Request, res: Response) => {
 
     //sort based on the time and first contact would be the primary contact - always
     contacts.sort((contact1: Contact, contact2: Contact) => {
-        return contact1.createdAt.getMilliseconds() < contact2.createdAt.getMilliseconds() ? 1 : -1
+        return contact1.createdAt.getTime() - contact2.createdAt.getTime();
     });
 
     const primaryContact = contacts[0];
@@ -48,16 +48,38 @@ export const ContactService = async (req: Request, res: Response) => {
         linkPrecedence: 'secondary'
     });
     //get all non-null emails, phoneNumbers and secondary ids
-    const emails: string[] = contacts.filter(contact => contact.email).map(contact => contact.email as string);
-    const secondaryContactIds: number[] = contacts.map(contact => contact.id);
-    const phoneNumbers: string[] = contacts.filter(contact => contact.phoneNumber).map(contact => contact.phoneNumber as string);
-    
+    const emailSet = new Set();
+    const emails: string[] = contacts.filter(contact => {
+        if (contact.email && !emailSet.has(contact.email)) {
+            emailSet.add(contact.email);
+            return true;
+        }
+        return false;
+    }).map(contact => contact.email as string);
+
+    const secondaryContactsSet = new Set();
+    const secondaryContactIds: number[] = contacts.filter(contact => {
+        if (!secondaryContactsSet.has(contact.id)) {
+            secondaryContactsSet.add(contact.id)
+            return true;
+        }
+        return false;
+    }).map(contact => contact.id);
+
+    const phoneNumbersSet = new Set();
+    const phoneNumbers: string[] = contacts.filter(contact => {
+        if (contact.phoneNumber && !phoneNumbersSet.has(contact.phoneNumber)) {
+            phoneNumbersSet.add(contact.phoneNumber);
+            return true;
+        }
+        return false;
+    }).map(contact => contact.phoneNumber as string);
 
     secondaryContactIds.push(newContact.id);
-    if (email)
-        emails.push(newContact.email as string);
-    if (phoneNumber)
-        phoneNumbers.push(newContact.phoneNumber as string);
+    if (email && !emailSet.has(email))
+        emails.push(email as string);
+    if (phoneNumber && !phoneNumbersSet.has(phoneNumber))
+        phoneNumbers.push(phoneNumber as string);
 
     return res.status(200).json({
         contact: {
